@@ -1,0 +1,371 @@
+#include <iostream>
+#include <string>
+
+std::string defaultSymbols[2] = { "[X]", "[O]" };
+
+class Game {
+    private:
+    std::string board[3][3];
+    std::string symbols[2];
+    int turns = 0;
+    int win = 0;
+    public:
+    Game(); //empty default constructor
+    void displayBoard();
+    void setPlayerSymbols(); //change Xs and Os
+    void setAllPlayerSymbols(std::string, std::string);
+    void runGame(); //main function
+    int checkIfWin(); //runs checking
+    int checkInARow(int, int); //checks how many in a row
+    int getWin(); //returns who won
+};
+
+Game::Game() {
+    //initialize board
+    for (int row = 0; row < 3; row++)
+    {
+        for (int col = 0; col < 3; col++)
+        {
+            board[row][col] = "[ ]";
+        }
+    }
+    
+    //auto set p1 as X and p2 as O
+    symbols[0] = defaultSymbols[0];
+    symbols[1] = defaultSymbols[1];
+}
+
+void Game::displayBoard() {
+    //display board
+    std::cout << std::endl << "   0  1  2" << std::endl;
+    for (int row = 0; row < 3; row++) {
+        std::cout << row << " ";
+        for (int col = 0; col < 3; col++) {
+            std::cout << board[row][col];
+        }
+        std::cout << std::endl;
+    }
+}
+
+void Game::setPlayerSymbols() {
+    int choice = 0;
+    
+    std::cout << "\nCurrent Player Symbols\n";
+    std::cout << "Player 1: " << symbols[0] << "\n";
+    std::cout << "Player 2: " << symbols[1] << "\n";
+    std::cout << "Would you like to change the symbols?\n";
+    std::cout << "They can be characters other than X and O.\n";
+    std::cout << "1. Change\n2. Continue\n";
+    std::cout << "  >> ";
+    std::cin >> choice;
+    
+    while (choice < 0 && choice > 3) {
+        std::cout << "  >> ";
+        std::cin >> choice;
+    }
+    
+    if (choice == 1) {
+        std::string symb1 = "blah";
+        std::string symb2 = "blah blah?";
+        
+        while (symb1.length() > 1) {
+            std::cout << "Enter the character for Player 1: ";
+            std::cin >> symb1;
+        }
+        
+        while (symb2.length() > 1) {
+            std::cout << "Enter the character for Player 2: ";
+            std::cin >> symb2;
+        }
+        
+        symbols[0] = "[" + symb1 + "]";
+        symbols[1] = "[" + symb2 + "]";
+        
+        std::cout << "Sandwiching them in brackets... Done!\n";
+        std::cout << "Current Player Symbols\n";
+        std::cout << "Player 1: " << symbols[0] << "\n";
+        std::cout << "Player 2: " << symbols[1] << "\n";
+        
+        if (symbols[0] == symbols[1]) {
+            std::cout << "\nPlayer 1 and Player 2 have the same symbol.\n";
+            std::cout << "This is very not advisable. Please reenter.\n";
+            setPlayerSymbols();
+        }
+        else {
+            int choice1;
+            std::cout << "Would you like to set these symbols for all remaining games?\n";
+            std::cout << "1. Yes\n2. No\n  >> ";
+            std::cin >> choice1;
+            std::cout << std::endl;
+            
+            if (choice1 == 1) {
+                setAllPlayerSymbols(symbols[0], symbols[1]);
+            }
+        }
+        
+    }
+    else if (choice == 2) {
+        if (symbols[0] == symbols[1]) {
+            std::cout << "\nPlayer 1 and Player 2 have the same symbol.\n";
+            std::cout << "This is very not advisable. Please reenter.\n";
+            setPlayerSymbols();
+        }
+    }
+    
+}
+
+void Game::setAllPlayerSymbols(std::string p1, std::string p2) {
+    defaultSymbols[0] = p1;
+    defaultSymbols[1] = p2;
+}
+
+void Game::runGame() {
+    
+    displayBoard();
+    
+    while (turns < 9 && win == 0)
+    {
+        int currentPlayer = turns % 2 + 1;
+        int rowchoice = -1, colchoice = -1;
+        
+        std::cout << std::endl;
+        std::cout << "Player " << currentPlayer << "'s turn ";
+        std::cout << symbols[currentPlayer - 1] << "!" << std::endl;
+        std::cout << "Row: ";
+        std::cin >> rowchoice;
+        std::cout << "Col: ";
+        std::cin >> colchoice;
+        
+        while (rowchoice < 0 || rowchoice > 2) {
+            std::cout << "Invalid row and/or col. Try again\n";
+            std::cout << "Row: ";
+            std::cin >> rowchoice;
+            std::cout << "Col: ";
+            std::cin >> colchoice;
+        }
+        
+        //makes sure the spot is open
+        while (board[rowchoice][colchoice] != "[ ]")
+        {
+            std::cout << "Spot is taken. Try again" << std::endl;
+            std::cout << "Row: ";
+            std::cin >> rowchoice;
+            std::cout << "Col: ";
+            std::cin >> colchoice;
+            
+            while (rowchoice < 0 || rowchoice > 2) {
+                std::cout << "Invalid row and/or col. Try again\n";
+                std::cout << "Row: ";
+                std::cin >> rowchoice;
+                std::cout << "Col: ";
+                std::cin >> colchoice;
+            }
+        }
+        
+        //sets the spot as X
+        board[rowchoice][colchoice] = symbols[currentPlayer - 1];
+        turns++;
+        
+        displayBoard();
+        
+        if (checkIfWin() != 0) {
+            break;
+        }
+        
+    }
+    
+    if (win == 0) {
+        std::cout << "It was a tie!\n";
+    }
+    else {
+        std::cout << "Player " << win << " " << symbols[win - 1] << " wins!\n";
+    }
+
+    std::cout << std::endl;
+}
+
+int Game::checkIfWin() {
+    int inARow = 0, blanks = 0, whomst = 0;
+    std::string playerSymbol = symbols[0]; //just use p1
+    
+    for (int i = 0; i < 2; i++) {
+        
+        int row = 0, col = 0;
+        int *x = nullptr, *y = nullptr;
+        
+        switch(i) {
+            case 0: x = &row, y = &col;
+                break;
+            case 1: x = &col, y = &row;
+                break;
+        }
+
+        for (*x = 0; *x < 3; (*x)++) {
+            inARow = 0; //counter
+            blanks = 0;
+            
+            for (*y = 0; *y < 3; (*y)++) {
+                if (board[row][col] == playerSymbol) {
+                    inARow++; //count amount in a row
+                }
+                else if (board[row][col] == "[ ]") {
+                    blanks++;
+                }
+            }
+            
+            whomst = checkInARow(inARow, blanks);
+            if (whomst != 0) {
+                return whomst;
+            }
+        }
+    }
+    
+    for (int checks = 0; checks < 2; checks++) {
+        inARow = 0;
+        blanks = 0;
+        
+        switch(checks) {
+            case 0: //checks diagonal
+                for (int count = 0; count < 3; count++) {
+                    if (board[count][count] == playerSymbol) {
+                        inARow++; //count amount in a row
+                    }
+                    else if (board[count][count] == "[ ]") {
+                        blanks++;
+                    }
+                }
+                break;
+            case 1: //checks other diagonal
+                int row = 0, col = 2;
+                for (int offset = 0; offset < 3; offset++) {
+                    if (board[row + offset][col - offset] == playerSymbol) {
+                        inARow++; //count amount in a row
+                    }
+                    else if (board[row + offset][col - offset] == "[ ]") {
+                        blanks++;
+                    }
+                }   
+                break;
+        
+        }
+        
+        whomst = checkInARow(inARow, blanks);
+        if (whomst != 0) {
+            return whomst;
+        }
+        
+    }
+    
+    //if no one won, go on
+    return whomst;
+}
+
+int Game::checkInARow(int inARow, int empty) {
+    
+    //std::cout <<inARow << " " << empty << "\n";
+    
+    if (inARow == 3) {
+        win = 1;
+    }
+    else if (inARow == 0 && empty == 0) {
+        win = 2;
+    }
+    else {
+        win = 0;
+    }
+    
+    return win;
+    
+}
+
+int Game::getWin() {
+    return win;
+}
+
+void scoreBoard(Game *ticTac, int roundsDone, int totalRounds) {
+    int p1Win = 0, p2Win = 0;
+    std::cout << "\nTournament Report\n";
+    for (int i = 0; i < roundsDone; i++) {
+
+        std::cout << "ROUND " << i + 1 << ": ";
+        
+        if (ticTac[i].getWin() != 0) {
+            std::cout << "PLAYER " << ticTac[i].getWin();
+            std::cout << " WIN";
+            
+            if (ticTac[i].getWin() == 1) {
+                p1Win++;
+            }
+            else {
+                p2Win++;
+            }
+            
+        }
+        else {
+            std::cout << "DRAW";
+        }
+        
+        ticTac[i].displayBoard();
+        std::cout << std::endl;
+    }
+    
+    std::cout << "TOTAL SCORE:\n";
+    std::cout << "P1 WINS: " << p1Win << "\n";
+    std::cout << "P2 WINS: " << p2Win << "\n";
+    std::cout << "DRAWS: " << roundsDone - p1Win - p2Win << "\n\n";
+    
+    if (totalRounds <= roundsDone) {
+        if (p1Win > p2Win) {
+            std::cout << "OVERALL WINNER: PLAYER 1!\n";
+        }
+        else if (p2Win > p2Win) {
+            std::cout << "OVERALL WINNER: PLAYER 2!\n";
+        }
+        else {
+            std::cout << "IT WAS A TIE OVERALL!\n";
+        }
+    }
+    
+}
+
+int main()
+{
+    Game *rounds;
+    int numOfRounds = 0;
+
+    std::cout << "2-Player Tic Tac Toe: Tournament Edition" << std::endl;
+    std::cout << "How many games would you like to play? ";
+    std::cin >> numOfRounds;
+    std::cout << std::endl;
+    
+    rounds = new Game[numOfRounds];
+    
+    for (int count = 0; count < numOfRounds; count++) {
+        
+        int option = 0;
+        
+        while (option != 1) {
+            std::cout << "ROUND " << count + 1 << "\n";
+            std::cout << "1. Start\n2. Change symbols\n3. See scoreboard\n";
+            std::cout << "  >> ";
+            std::cin >> option;
+            
+            if (option == 2) {
+                rounds[count].setPlayerSymbols();
+            }
+            else if (option == 3) {
+                scoreBoard(rounds, count, numOfRounds);
+            }
+        }
+        
+        rounds[count].runGame();
+        
+    }
+    
+    std::cout << "TOURNAMENT OVER!\nHere are the results!\n";
+    scoreBoard(rounds, numOfRounds, numOfRounds);
+    
+    std::cout << "Thank you for using 2-Player Tic Tac Toe: Tournament Edition.\n";
+    
+    return 0;
+}
